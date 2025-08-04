@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { serialize } from 'cookie'
+import { AUTH_COOKIE } from '@/lib/auth'
 
 export async function POST(req: NextRequest) {
   const body = await req.json()
@@ -33,8 +34,8 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  // Set secure session cookie
-  const cookie = serialize('session', 'active', {
+  // Set secure auth cookie
+  const cookie = serialize(AUTH_COOKIE, 'true', {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
