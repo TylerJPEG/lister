@@ -19,10 +19,6 @@ export default function LoginPage() {
     e.preventDefault()
     setErrors([])
 
-    // ✅ Load env variables here at runtime
-    const validEmail = process.env.NEXT_PUBLIC_LOGIN_EMAIL || ''
-    const validPassword = process.env.NEXT_PUBLIC_LOGIN_PASSWORD || ''
-
     const newErrors: string[] = []
 
     // Validate presence
@@ -39,29 +35,29 @@ export default function LoginPage() {
       return
     }
 
-    // Validate actual credentials
-    if (email !== validEmail && password !== validPassword) {
-      setErrors(['Invalid credentials'])
-      return
-    }
-
-    if (email !== validEmail) {
-      setErrors(['Invalid email'])
-      return
-    }
-
-    if (password !== validPassword) {
-      setErrors(['Invalid password'])
-      return
-    }
-
-    // Passed all validation
+    // Passed basic validation; ask server to verify credentials
     setLoading(true)
-    router.push('/')
-  }
+    try {
+      const res = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      })
 
-  const hasError = (field: 'email' | 'password') =>
-    errors.some(err => err.toLowerCase().includes(field))
+      const data = await res.json()
+
+      if (!res.ok) {
+        setErrors([data.error || 'Invalid credentials'])
+        setLoading(false)
+        return
+      }
+
+      router.push('/')
+    } catch (err) {
+      setErrors(['Something went wrong'])
+      setLoading(false)
+    }
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center p-6">
