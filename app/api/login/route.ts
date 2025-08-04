@@ -1,48 +1,36 @@
 import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
-import { serialize } from 'cookie'
+import { cookies } from 'next/headers'
 
-export async function POST(req: NextRequest) {
-  const body = await req.json()
-  const { email, password } = body
+export async function POST(request: Request) {
+  const { email, password } = await request.json()
 
-  const validEmail = process.env.APP_EMAIL
-  const validPassword = process.env.APP_PASSWORD
+  const validEmail = process.env.AUTH_EMAIL
+  const validPassword = process.env.AUTH_PASSWORD
 
-  // Empty field check (should be prevented client-side but safe here too)
   if (!email || !password) {
-    return NextResponse.json(
-      { success: false, error: 'Fields can’t be blank' },
-      { status: 400 }
-    )
+    return NextResponse.json({ error: 'Field can\'t be blank' }, { status: 400 })
   }
 
-  // Account check
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  if (!emailRegex.test(email)) {
+    return NextResponse.json({ error: 'Invalid email address' }, { status: 400 })
+  }
+
   if (email !== validEmail) {
-    return NextResponse.json(
-      { success: false, error: 'Account doesn’t exist' },
-      { status: 401 }
-    )
+    return NextResponse.json({ error: 'Invalid email address' }, { status: 401 })
   }
 
-  // Password check
   if (password !== validPassword) {
-    return NextResponse.json(
-      { success: false, error: 'Password is invalid' },
-      { status: 401 }
-    )
+    return NextResponse.json({ error: 'Invalid password' }, { status: 401 })
   }
 
-  // Set secure session cookie
-  const cookie = serialize('session', 'active', {
+  // Set cookie (basic string flag for now)
+  cookies().set('auth', 'true', {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
+    sameSite: 'strict',
     path: '/',
-    maxAge: 60 * 60 * 24 * 7, // 1 week
+    secure: process.env.NODE_ENV === 'production',
   })
 
-  const response = NextResponse.json({ success: true })
-  response.headers.set('Set-Cookie', cookie)
-  return response
+  return NextResponse.json({ success: true })
 }
