@@ -18,46 +18,29 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setErrors([])
-
-    // ✅ Load env variables here at runtime
-    const validEmail = process.env.NEXT_PUBLIC_LOGIN_EMAIL || ''
-    const validPassword = process.env.NEXT_PUBLIC_LOGIN_PASSWORD || ''
-
-    const newErrors: string[] = []
-
-    // Validate presence
-    if (!email) newErrors.push('Email can’t be blank')
-    if (!password) newErrors.push('Password can’t be blank')
-
-    // Validate format
-    const emailFormat = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    if (email && !emailFormat.test(email)) newErrors.push('Invalid email address')
-
-    // Stop here if basic errors
-    if (newErrors.length > 0) {
-      setErrors(newErrors)
-      return
-    }
-
-    // Validate actual credentials
-    if (email !== validEmail && password !== validPassword) {
-      setErrors(['Invalid credentials'])
-      return
-    }
-
-    if (email !== validEmail) {
-      setErrors(['Invalid email'])
-      return
-    }
-
-    if (password !== validPassword) {
-      setErrors(['Invalid password'])
-      return
-    }
-
-    // Passed all validation
     setLoading(true)
-    router.push('/')
+
+    try {
+      const res = await fetch('/api/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      })
+
+      if (res.ok) {
+        router.push('/')
+        return
+      }
+
+      const data = await res.json()
+      setErrors([data.error || 'Login failed'])
+    } catch (err) {
+      setErrors(['Network error'])
+    } finally {
+      setLoading(false)
+    }
   }
 
   const hasError = (field: 'email' | 'password') =>
