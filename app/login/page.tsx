@@ -15,12 +15,13 @@ export default function LoginPage() {
   const [errors, setErrors] = useState<string[]>([])
   const [loading, setLoading] = useState(false)
 
-  const validEmail = process.env.NEXT_PUBLIC_LOGIN_EMAIL || ''
-  const validPassword = process.env.NEXT_PUBLIC_LOGIN_PASSWORD || ''
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setErrors([])
+
+    // ✅ Load env variables here at runtime
+    const validEmail = process.env.NEXT_PUBLIC_LOGIN_EMAIL || ''
+    const validPassword = process.env.NEXT_PUBLIC_LOGIN_PASSWORD || ''
 
     const newErrors: string[] = []
 
@@ -82,20 +83,18 @@ export default function LoginPage() {
         <div>
           <Input
             type="email"
-            placeholder="Email"
+            placeholder="name@example.com"
             value={email}
-            onChange={e => setEmail(e.target.value)}
-            variant={hasError('email') ? 'destructive' : undefined}
+            onChange={(e) => setEmail(e.target.value)}
           />
         </div>
 
         <div>
           <Input
             type="password"
-            placeholder="Password"
+            placeholder="••••••••"
             value={password}
-            onChange={e => setPassword(e.target.value)}
-            variant={hasError('password') ? 'destructive' : undefined}
+            onChange={(e) => setPassword(e.target.value)}
           />
         </div>
 
