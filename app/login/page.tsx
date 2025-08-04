@@ -1,81 +1,89 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { useRouter } from 'next/navigation'
 
 export default function LoginPage() {
+  const router = useRouter()
+
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
-  const router = useRouter()
+  const [touched, setTouched] = useState({ email: false, password: false })
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
     if (!email || !password) {
-      setError('Fields can’t be blank')
+      setTouched({ email: true, password: true })
+      setError("Field can't be blank")
       return
     }
 
-    const res = await fetch('/api/login', {
-      method: 'POST',
-      body: JSON.stringify({ email, password }),
-    })
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(email)) {
+      setTouched({ ...touched, email: true })
+      setError('Invalid email address')
+      return
+    }
 
-    const data = await res.json()
+    try {
+      const res = await fetch('/api/login', {
+        method: 'POST',
+        body: JSON.stringify({ email, password }),
+      })
 
-    if (data.success) {
-      router.push('/')
-    } else {
-      setError(data.error)
+      if (res.ok) {
+        router.push('/')
+      } else {
+        const result = await res.json()
+        setError(result.message || 'Invalid login')
+        setTouched({ email: true, password: true })
+      }
+    } catch (err) {
+      setError('Something went wrong.')
     }
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-neutral-100 px-4">
-      <div className="w-full max-w-sm bg-white p-6 shadow rounded">
-        <div className="text-center mb-6">
-          <p className="text-xs font-medium text-neutral-700 mb-1">💀 Grim Lister</p>
-          <h1 className="text-lg font-semibold text-neutral-900 leading-tight">It’s awful to see you again.</h1>
+    <main className="flex items-center justify-center min-h-screen bg-muted">
+      <form
+        onSubmit={handleSubmit}
+        className="w-full max-w-sm space-y-6 bg-white p-8 rounded shadow"
+      >
+        <h1 className="text-xl font-semibold text-center">It’s awful to see you again.</h1>
+
+        {error && (
+          <Alert variant="destructive">
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+
+        <div className="space-y-2">
+          <Input
+            type="email"
+            placeholder="Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className={touched.email && !email ? 'border-destructive' : ''}
+          />
+          <Input
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className={touched.password && !password ? 'border-destructive' : ''}
+          />
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label htmlFor="email" className="text-sm text-neutral-700 block mb-1">Email</label>
-            <Input
-              id="email"
-              type="email"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              className={error && !email ? 'border-red-500' : ''}
-              placeholder="Enter email"
-            />
-          </div>
-
-          <div>
-            <label htmlFor="password" className="text-sm text-neutral-700 block mb-1">Password</label>
-            <Input
-              id="password"
-              type="password"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              className={error && !password ? 'border-red-500' : ''}
-              placeholder="Enter password"
-            />
-          </div>
-
-          {error && (
-            <div className="bg-red-50 border border-red-400 text-red-700 text-sm p-3 rounded">
-              <p className="font-medium">Please check the marked fields</p>
-              <p className="text-xs">{error}</p>
-            </div>
-          )}
-
-          <Button type="submit" className="w-full mt-2">Log in</Button>
-        </form>
-      </div>
-    </div>
+        <Button type="submit" className="w-full">
+          Log in
+        </Button>
+      </form>
+    </main>
   )
 }
