@@ -1,2 +1,0 @@
-# lister
-Grim Lister
