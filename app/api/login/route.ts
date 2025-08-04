@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
+import { AUTH_COOKIE } from '@/lib/auth'
 
 export async function POST(request: Request) {
   const { email, password } = await request.json()
@@ -25,7 +26,7 @@ export async function POST(request: Request) {
   }
 
   // Set cookie (basic string flag for now)
-  cookies().set('auth', 'true', {
+  cookies().set(AUTH_COOKIE, 'true', {
     httpOnly: true,
     sameSite: 'strict',
     path: '/',
