@@ -1,89 +1,108 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import { useRouter } from 'next/navigation'
+import { ExclamationTriangleIcon } from '@radix-ui/react-icons'
 
 export default function LoginPage() {
   const router = useRouter()
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
-  const [touched, setTouched] = useState({ email: false, password: false })
+  const [errors, setErrors] = useState<string[]>([])
+  const [loading, setLoading] = useState(false)
+
+  const validEmail = process.env.NEXT_PUBLIC_LOGIN_EMAIL || ''
+  const validPassword = process.env.NEXT_PUBLIC_LOGIN_PASSWORD || ''
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setErrors([])
 
-    if (!email || !password) {
-      setTouched({ email: true, password: true })
-      setError("Field can't be blank")
+    const newErrors: string[] = []
+
+    // Validate presence
+    if (!email) newErrors.push('Email can’t be blank')
+    if (!password) newErrors.push('Password can’t be blank')
+
+    // Validate format
+    const emailFormat = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (email && !emailFormat.test(email)) newErrors.push('Invalid email address')
+
+    // Stop here if basic errors
+    if (newErrors.length > 0) {
+      setErrors(newErrors)
       return
     }
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    if (!emailRegex.test(email)) {
-      setTouched({ ...touched, email: true })
-      setError('Invalid email address')
+    // Validate actual credentials
+    if (email !== validEmail && password !== validPassword) {
+      setErrors(['Invalid credentials'])
       return
     }
 
-    try {
-      const res = await fetch('/api/login', {
-        method: 'POST',
-        body: JSON.stringify({ email, password }),
-      })
-
-      if (res.ok) {
-        router.push('/')
-      } else {
-        const result = await res.json()
-        setError(result.message || 'Invalid login')
-        setTouched({ email: true, password: true })
-      }
-    } catch (err) {
-      setError('Something went wrong.')
+    if (email !== validEmail) {
+      setErrors(['Invalid email'])
+      return
     }
+
+    if (password !== validPassword) {
+      setErrors(['Invalid password'])
+      return
+    }
+
+    // Passed all validation
+    setLoading(true)
+    router.push('/')
   }
 
-  return (
-    <main className="flex items-center justify-center min-h-screen bg-muted">
-      <form
-        onSubmit={handleSubmit}
-        className="w-full max-w-sm space-y-6 bg-white p-8 rounded shadow"
-      >
-        <h1 className="text-xl font-semibold text-center">It’s awful to see you again.</h1>
+  const hasError = (field: 'email' | 'password') =>
+    errors.some(err => err.toLowerCase().includes(field))
 
-        {error && (
+  return (
+    <div className="min-h-screen flex items-center justify-center p-6">
+      <form onSubmit={handleSubmit} className="w-full max-w-md space-y-6">
+        <h1 className="text-2xl font-semibold text-center">Log in</h1>
+
+        {errors.length > 0 && (
           <Alert variant="destructive">
+            <ExclamationTriangleIcon className="h-4 w-4" />
             <AlertTitle>Error</AlertTitle>
-            <AlertDescription>{error}</AlertDescription>
+            <AlertDescription>
+              {errors.map((err, idx) => (
+                <p key={idx}>{err}</p>
+              ))}
+            </AlertDescription>
           </Alert>
         )}
 
-        <div className="space-y-2">
+        <div>
           <Input
             type="email"
             placeholder="Email"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className={touched.email && !email ? 'border-destructive' : ''}
+            onChange={e => setEmail(e.target.value)}
+            variant={hasError('email') ? 'destructive' : undefined}
           />
+        </div>
+
+        <div>
           <Input
             type="password"
             placeholder="Password"
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className={touched.password && !password ? 'border-destructive' : ''}
+            onChange={e => setPassword(e.target.value)}
+            variant={hasError('password') ? 'destructive' : undefined}
           />
         </div>
 
-        <Button type="submit" className="w-full">
-          Log in
+        <Button type="submit" className="w-full" disabled={loading}>
+          {loading ? 'Logging in…' : 'Login'}
         </Button>
       </form>
-    </main>
+    </div>
   )
 }
