@@ -1,1 +1,0 @@
-// Middleware to protect /app routes
