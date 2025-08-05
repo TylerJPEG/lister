@@ -4,11 +4,12 @@ import { AUTH_COOKIE } from '@/lib/auth'
 export function middleware(request: NextRequest) {
   const token = request.cookies.get(AUTH_COOKIE)?.value
 
-  // Allow access to login page or static files
+  // Allow access to login page, login API, or static files
   const isLoginPage = request.nextUrl.pathname === '/login'
+  const isLoginApi = request.nextUrl.pathname === '/api/login'
   const isPublicFile = /\.(.*)$/.test(request.nextUrl.pathname)
 
-  if (token || isLoginPage || isPublicFile) {
+  if (token || isLoginPage || isLoginApi || isPublicFile) {
     return NextResponse.next()
   }
 
