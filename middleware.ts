@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { AUTH_COOKIE } from '@/lib/auth'
 
 export function middleware(request: NextRequest) {
-  const token = request.cookies.get('auth-token')?.value
+  const token = request.cookies.get(AUTH_COOKIE)?.value
 
   // Allow access to login page or static files
   const isLoginPage = request.nextUrl.pathname === '/login'
