@@ -7,8 +7,8 @@ export async function POST(req: NextRequest) {
   const body = await req.json()
   const { email, password } = body
 
-  const validEmail = process.env.APP_EMAIL
-  const validPassword = process.env.APP_PASSWORD
+  const validEmail = process.env.AUTH_EMAIL
+  const validPassword = process.env.AUTH_PASSWORD
 
   // Empty field check (should be prevented client-side but safe here too)
   if (!email || !password) {
