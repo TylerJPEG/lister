@@ -18,33 +18,46 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setErrors([])
-    setLoading(true)
 
+    const newErrors: string[] = []
+
+    // Validate presence
+    if (!email) newErrors.push('Email can’t be blank')
+    if (!password) newErrors.push('Password can’t be blank')
+
+    // Validate format
+    const emailFormat = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (email && !emailFormat.test(email)) newErrors.push('Invalid email address')
+
+    // Stop here if basic errors
+    if (newErrors.length > 0) {
+      setErrors(newErrors)
+      return
+    }
+
+    // Passed basic validation; ask server to verify credentials
+    setLoading(true)
     try {
       const res = await fetch('/api/login', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
       })
 
-      if (res.ok) {
-        router.push('/')
+      const data = await res.json()
+
+      if (!res.ok) {
+        setErrors([data.error || 'Invalid credentials'])
+        setLoading(false)
         return
       }
 
-      const data = await res.json()
-      setErrors([data.error || 'Login failed'])
+      router.push('/')
     } catch (err) {
-      setErrors(['Network error'])
-    } finally {
+      setErrors(['Something went wrong'])
       setLoading(false)
     }
   }
-
-  const hasError = (field: 'email' | 'password') =>
-    errors.some(err => err.toLowerCase().includes(field))
 
   return (
     <div className="min-h-screen flex items-center justify-center p-6">

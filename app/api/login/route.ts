@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
-import { AUTH_COOKIE } from '@/lib/auth'
 
 export async function POST(request: Request) {
   const { email, password } = await request.json()
@@ -25,8 +24,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Invalid password' }, { status: 401 })
   }
 
-  // Set cookie (basic string flag for now)
-  cookies().set(AUTH_COOKIE, 'true', {
+  // Set auth-token cookie (basic string flag for now)
+  cookies().set('auth-token', 'true', {
     httpOnly: true,
     sameSite: 'strict',
     path: '/',
